@@ -3,6 +3,8 @@
 This project is a Forge 47.x (Minecraft 1.20.1) port of [Mishkis/orbital-railgun](https://github.com/Mishkis/orbital-railgun).
 It targets Java 17 and uses Parchment mappings via the Librarian ForgeGradle plugin for development.
 
+And now maintained and ported by **Nxkoo**.
+
 ## Notable Port Changes
 
 * **Rendering:** Satin has been removed. Post-processing is implemented using Forge's `PostChain` API and custom shader instances that mirror the original Fabric effects. The chains reload and resize correctly and expose the same uniforms that the Fabric version populated.
