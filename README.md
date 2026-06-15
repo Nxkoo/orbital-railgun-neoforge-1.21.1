@@ -20,6 +20,7 @@ It targets **Java 21** and utilizes the NeoForge event bus system to bring high-
 * **Java 21** toolchain (Required for Minecraft 1.21+).
 * **NeoForge** (21.1.x).
 * **GeckoLib 4** (Required dependency for animations).
+* Built JARs should contain `META-INF/neoforge.mods.toml` only; the legacy Forge `META-INF/mods.toml` is intentionally not packaged.
 
 ### Building
 
@@ -51,7 +52,20 @@ Configuration files are located in `config/orbital_railgun-common.toml`.
 ### Visuals & Balance
 
 * `destructionDiameter`: The size of the crater created by the strike.
-* `shaderDiameter`: Visual size of the beam effect.
+* `maxBreakHardness`: Maximum block hardness the orbital strike can destroy.
+* `blocksPerTick`: Maximum number of blocks removed per server tick during an active strike.
+
+## Beta Notes
+
+This beta includes the NeoForge 1.21.1 rendering stabilization pass. The targeting and strike post-processing effect was corrected to use the proper client render event bus and camera model-view matrix, fixing reports where the effect appeared pinned to the bottom-left of the screen.
+
+GeckoLib 4.7+ is required. FTB Chunks and Open Parties & Claims are optional compatibility integrations.
+
+## Shader Compatibility
+
+The targeting and strike visuals use a NeoForge `PostChain`. Iris/Oculus shaderpacks are detected at runtime; when a shaderpack is active, the railgun post-processing chain is disabled to avoid framebuffer and depth-buffer conflicts.
+
+If the targeting effect appears pinned to a screen corner, test without shaderpacks first and report GPU, window mode, resolution, FOV, and whether Oculus/Iris is installed.
 
 ## ⚠️ Credits
 

@@ -44,7 +44,7 @@ import java.util.Set;
 
 @OnlyIn(Dist.CLIENT)
 @SuppressWarnings("removal")
-@EventBusSubscriber(modid = ForgeOrbitalRailgunMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ForgeOrbitalRailgunMod.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
  final class ClientEvents {
     private static final ResourceLocation RAILGUN_CHAIN_ID = ForgeOrbitalRailgunMod.id("shaders/post/railgun.json");
     private static final Field PASSES_FIELD = findPassesField();
@@ -97,22 +97,33 @@ import java.util.Set;
 
     private ClientEvents() {}
 
-    @SubscribeEvent
-    public static void onRegisterReloadListeners( RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(new SimplePreparableReloadListener<Void>() {
-            @Override protected Void prepare(ResourceManager resourceManager, ProfilerFiller profiler) { return null; }
-            @Override protected void apply(Void object, ResourceManager resourceManager, ProfilerFiller profiler) {
-                // If a shaderpack is active, keep our chain torn down; otherwise (re)load it.
-                if (isShaderpackActive()) {
-                    closeChain();
-                    clearPauseLatch();
-                    ForgeOrbitalRailgunMod.LOGGER.info("[orbital_railgun] Shaderpack active — skipping PostChain build on reload.");
-                } else {
-                    ClientEvents.reloadChain(resourceManager);
-                    clearPauseLatch();
+    @OnlyIn(Dist.CLIENT)
+    @EventBusSubscriber(modid = ForgeOrbitalRailgunMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    static final class ModBusEvents {
+        private ModBusEvents() {}
+
+        @SubscribeEvent
+        public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
+            event.registerReloadListener(new SimplePreparableReloadListener<Void>() {
+                @Override
+                protected Void prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+                    return null;
                 }
-            }
-        });
+
+                @Override
+                protected void apply(Void object, ResourceManager resourceManager, ProfilerFiller profiler) {
+                    // If a shaderpack is active, keep our chain torn down; otherwise (re)load it.
+                    if (isShaderpackActive()) {
+                        closeChain();
+                        clearPauseLatch();
+                        ForgeOrbitalRailgunMod.LOGGER.info("[orbital_railgun] Shaderpack active - skipping PostChain build on reload.");
+                    } else {
+                        ClientEvents.reloadChain(resourceManager);
+                        clearPauseLatch();
+                    }
+                }
+            });
+        }
     }
 
     private static void clearPauseLatch() {
@@ -268,7 +279,7 @@ import java.util.Set;
         // ---- Upload uniforms and render ----
         Matrix4f projection = new Matrix4f(event.getProjectionMatrix());
         Matrix4f inverseProjection = new Matrix4f(projection).invert();
-        Matrix4f modelView = new Matrix4f(event.getPoseStack().last().pose());
+        Matrix4f modelView = new Matrix4f(event.getModelViewMatrix());
         Vec3 cameraPos = event.getCamera().getPosition();
 
         List<PostPass> passes = getPasses();
@@ -417,7 +428,6 @@ import java.util.Set;
             ResourceLocation passName = getPassName(pass);
             boolean expectsModelViewMatrix = passName != null && MODEL_VIEW_UNIFORM_PASSES.contains(passName);
 
-            setMatrix(effect, "ProjMat", projection);
             if (expectsModelViewMatrix) setMatrix(effect, "ModelViewMat", modelView);
             setMatrix(effect, "InverseTransformMatrix", inverseProjection);
             setVec3(effect, "CameraPosition", cameraPos);
